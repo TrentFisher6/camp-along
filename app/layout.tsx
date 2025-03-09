@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic'
 const OpenStreetMap = dynamic(() => import('@/components/OpenStreetMap'), {
   ssr: false,
 })
-
+      
 const geistSans = Geist({
     variable: "--font-geist-sans",
     subsets: ["latin"],

@@ -7,6 +7,7 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar"
 import {Command} from "lucide-react";
+import {RouteInput} from "@/components/ui/route-input";
 
 export function AppSidebar() {
     return (
@@ -29,6 +30,7 @@ export function AppSidebar() {
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup />
+                <RouteInput />
                 <SidebarGroup />
             </SidebarContent>
             <SidebarFooter />
