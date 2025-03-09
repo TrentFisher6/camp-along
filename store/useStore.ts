@@ -42,13 +42,12 @@ type State = {
 }
 
 const geocodeAddress = async (address: string): Promise<Coordinates> => {
-  const response = await fetch("http://localhost:3001/geocode", {
-    method: "POST",
+  const response = await fetch(`https://et04hjkh24.execute-api.us-east-1.amazonaws.com/prod/geocode?address=${address}`, {
     headers: {
+      'Accept': 'application/json',
       'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ address })
-  });
+    }
+  })
   
   if (!response.ok) {
     throw new Error('Geocoding request failed');
@@ -65,7 +64,7 @@ const geocodeAddress = async (address: string): Promise<Coordinates> => {
 };
 
 const calculateRouteFromCoordinates = async (start: Coordinates, end: Coordinates): Promise<Route> => {
-  const response = await fetch('http://localhost:3001/getRoute', {
+  const response = await fetch('https://gv66vh2232.execute-api.us-east-1.amazonaws.com/prod/route', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
