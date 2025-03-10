@@ -7,6 +7,7 @@ import L from 'leaflet'
 import {useStore} from '@/store/useStore'
 import axios from 'axios'
 import * as turf from "@turf/turf";
+import { SiteInformation } from './ui/site-information';
 
 const sourceIcon = L.icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -158,9 +159,19 @@ const OpenStreetMap = ({ children }) => {
     const { sourceGeoCode, targetGeoCode, route, calculateRoute } = useStore();
     const [center] = useState({ lat: 39.8283, lng: -98.5795 }) // Center of USA
     const [campsites, setCampsites] = useState([]);
+    const [selectedCampsite, setSelectedCampsite] = useState(null);
+    const [showSiteInfo, setShowSiteInfo] = useState(false);
+    const [infoPosition, setInfoPosition] = useState({ top: 0, left: 0 });
     const ZOOM_LEVEL = 4
-    const mapRef = useRef()
+    const mapRef = useRef(null)
     const JSONurl = "https://opencampingmap.org/getcampsites";
+    const siteInfoRef = useRef(null);
+    
+    useEffect(() => {
+        if (selectedCampsite) {
+            console.log(selectedCampsite);
+        }
+    }, [selectedCampsite]);
 
     useEffect(() => {
         if (sourceGeoCode && targetGeoCode) {
@@ -220,16 +231,31 @@ const OpenStreetMap = ({ children }) => {
         }
     };
 
-    // function MapEvents() {
-    //     const map = useMapEvents({
-    //         load: () => {
-    //             if (sourceGeoCode && targetGeoCode) {
-    //                 updateMapContents();
-    //             }
-    //         }
-    //     });
-    //     return null;
-    // }
+    const updateInfoPosition = (campsite) => {
+        if (!mapRef.current || !campsite) return;
+        
+        try {
+            const map = mapRef.current;
+            const lat = campsite.geometry.coordinates[1];
+            const lng = campsite.geometry.coordinates[0];
+            
+            // Convert the geographic coordinates to pixel coordinates
+            const point = map.latLngToContainerPoint([lat, lng]);
+            
+            // Position the info box above the marker
+            setInfoPosition({
+                left: point.x,
+                top: Math.max(30, point.y - 30) // Ensure it's not positioned off the top of the screen
+            });
+        } catch (error) {
+            console.error("Error updating info position:", error);
+            // Fallback to center positioning if there's an error
+            setInfoPosition({
+                left: window.innerWidth / 2,
+                top: window.innerHeight / 2
+            });
+        }
+    };
 
     const isBroken = (properties) => {
         let attn = false;
@@ -252,19 +278,79 @@ const OpenStreetMap = ({ children }) => {
         return (attn)
     }
 
+    const handleCampsiteClick = (campsite, e) => {
+        e.originalEvent.stopPropagation(); // Prevent map click event
+        setSelectedCampsite(campsite);
+        setShowSiteInfo(true);
+        
+        // Get the position for the info box (above the marker)
+        const map = mapRef.current;
+        if (map) {
+            const lat = campsite.geometry.coordinates[1];
+            const lng = campsite.geometry.coordinates[0];
+            
+            // Zoom to the campsite
+            map.flyTo([lat, lng], 14, {
+                duration: 1
+            });
+            
+            // Update the info box position after the map animation completes
+            setTimeout(() => {
+                updateInfoPosition(campsite);
+            }, 1100); // Slightly longer than the flyTo duration
+            
+            // Also update immediately for initial positioning
+            updateInfoPosition(campsite);
+        }
+    };
+
+    const handleCloseInfo = () => {
+        setShowSiteInfo(false);
+        setSelectedCampsite(null);
+    };
+
+    // Define MapEvents inside the component to access state
+    const MapEventsComponent = () => {
+        const map = useMapEvents({
+            click: () => {
+                // Close site info when clicking elsewhere on the map
+                setShowSiteInfo(false);
+                setSelectedCampsite(null);
+            },
+            moveend: () => {
+                // Update the position of the info box when the map moves
+                if (selectedCampsite) {
+                    updateInfoPosition(selectedCampsite);
+                }
+            },
+            zoom: () => {
+                // Update the position of the info box when the map zooms
+                if (selectedCampsite) {
+                    updateInfoPosition(selectedCampsite);
+                }
+            }
+        });
+
+        return null;
+    };
+
     return (
         <div style={{ height: '100vh', width: '100vw', position: 'relative' }}>
             <MapContainer
                 center={center}
                 zoom={ZOOM_LEVEL}
-                ref={mapRef}
                 style={{ height: '100%', width: '100%' }}
+                ref={mapRef}
+                whenReady={(map) => {
+                    mapRef.current = map.target;
+                }}
             >
                 <TileLayer
-                    attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {/*<MapEvents />*/}
+                <MapEventsComponent />
+                
                 {sourceGeoCode && (
                     <Marker
                         position={[sourceGeoCode.lat, sourceGeoCode.lng]}
@@ -296,6 +382,9 @@ const OpenStreetMap = ({ children }) => {
                                 key={campsite.id}
                                 position={[lat, lng]}
                                 icon={pointToLayer(campsite, [lat, lng]).options.icon}
+                                eventHandlers={{
+                                    click: (e) => handleCampsiteClick(campsite, e)
+                                }}
                             />
                         );
                     }
@@ -306,6 +395,25 @@ const OpenStreetMap = ({ children }) => {
             <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 1000 }}>
                 {children}
             </div>
+            {selectedCampsite && showSiteInfo && (
+                <div 
+                    ref={siteInfoRef}
+                    style={{ 
+                        position: 'absolute', 
+                        top: `${infoPosition.top}px`, 
+                        left: `${infoPosition.left}px`, 
+                        transform: 'translate(-50%, -100%)', 
+                        zIndex: 1001,
+                        pointerEvents: 'auto' // Ensure clicks on the info box are captured
+                    }}
+                >
+                    <SiteInformation 
+                        campsite={selectedCampsite} 
+                        onClose={handleCloseInfo} 
+                        visible={true} 
+                    />
+                </div>
+            )}
         </div>
     )
 }
