@@ -34,8 +34,10 @@ type State = {
   route: Route | null
   isLoading: boolean
   error: string | null
+  searchDistance: number
   setSourceAddress: (address: string) => void
   setTargetAddress: (address: string) => void
+  setSearchDistance: (distance: number) => void
   geocodeAddress: (address: string, type: 'source' | 'target') => Promise<void>
   calculateRoute: () => Promise<void>
   clearAddresses: () => void
@@ -148,12 +150,16 @@ const useStore = create<State>()((set, get) => ({
   route: null,
   isLoading: false,
   error: null,
+  searchDistance: 25,
   
   setSourceAddress: (address: string) => 
     set((state) => ({ ...state, sourceAddress: address, sourceGeoCode: null, route: null })),
   
   setTargetAddress: (address: string) => 
     set((state) => ({ ...state, targetAddress: address, targetGeoCode: null, route: null })),
+
+  setSearchDistance: (distance: number) =>
+    set((state) => ({ ...state, searchDistance: distance })),
   
   geocodeAddress: async (address: string, type: 'source' | 'target') => {
     set((state) => ({ ...state, isLoading: true, error: null }));

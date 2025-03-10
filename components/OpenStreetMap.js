@@ -103,7 +103,7 @@ const pointToSegmentDistance = (campSite, line) => {
     return turf.distance(campsitePoint, linePoint, { units: "miles"});
 }
 
-const getMinDistanceToRoute = (point, routeCoordinates) => {
+const getMinDistanceToRoute = (point, routeCoordinates, searchDistance) => {
     if (routeCoordinates.length < 2) {
         return pointToSegmentDistance(point, routeCoordinates[0]);
     }
@@ -131,7 +131,7 @@ const getMinDistanceToRoute = (point, routeCoordinates) => {
         const exactDist = pointToSegmentDistance(point, midCoord);
         minDistance = Math.min(minDistance, exactDist);
 
-        if (minDistance <= 25) {
+        if (minDistance <= searchDistance) {
             return minDistance;
         }
 
@@ -156,7 +156,7 @@ const getMinDistanceToRoute = (point, routeCoordinates) => {
 };
 
 const OpenStreetMap = ({ children }) => {
-    const { sourceGeoCode, targetGeoCode, route, calculateRoute } = useStore();
+    const { sourceGeoCode, targetGeoCode, route, calculateRoute, searchDistance } = useStore();
     const [center] = useState({ lat: 39.8283, lng: -98.5795 }) // Center of USA
     const [campsites, setCampsites] = useState([]);
     const [selectedCampsite, setSelectedCampsite] = useState(null);
@@ -212,10 +212,10 @@ const OpenStreetMap = ({ children }) => {
 
         try {
             const formData = new FormData();
-            const minLat = Math.min(sourceGeoCode.lat, targetGeoCode.lat) - 0.5;
-            const maxLat = Math.max(sourceGeoCode.lat, targetGeoCode.lat) + 0.5;
-            const minLng = Math.min(sourceGeoCode.lng, targetGeoCode.lng) - 0.5;
-            const maxLng = Math.max(sourceGeoCode.lng, targetGeoCode.lng) + 0.5;
+            const minLat = Math.min(sourceGeoCode.lat, targetGeoCode.lat) - 2;
+            const maxLat = Math.max(sourceGeoCode.lat, targetGeoCode.lat) + 2;
+            const minLng = Math.min(sourceGeoCode.lng, targetGeoCode.lng) - 2;
+            const maxLng = Math.max(sourceGeoCode.lng, targetGeoCode.lng) + 2;
             
             const bbox = `${minLng},${minLat},${maxLng},${maxLat}`;
             formData.append('bbox', bbox);
@@ -374,9 +374,9 @@ const OpenStreetMap = ({ children }) => {
                 {route && campsites.map((campsite) => {
                     const lng = campsite.geometry.coordinates[0];
                     const lat = campsite.geometry.coordinates[1];
-                    const distance = getMinDistanceToRoute([lng, lat], route.coordinates);
+                    const distance = getMinDistanceToRoute([lng, lat], route.coordinates, searchDistance);
                     
-                    if (distance <= 25) {
+                    if (distance <= searchDistance) {
                         return (
                             <Marker
                                 key={campsite.id}
