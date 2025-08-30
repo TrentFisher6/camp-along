@@ -156,7 +156,7 @@ const getMinDistanceToRoute = (point, routeCoordinates, searchDistance) => {
 };
 
 const OpenStreetMap = ({ children }) => {
-    const { sourceGeoCode, targetGeoCode, route, calculateRoute, searchDistance } = useStore();
+    const { sourceGeoCode, targetGeoCode, route, calculateRoute, searchDistance, setCampsitesLoading, isCampsitesLoading } = useStore();
     const [center] = useState({ lat: 39.8283, lng: -98.5795 }) // Center of USA
     const [campsites, setCampsites] = useState([]);
     const [selectedCampsite, setSelectedCampsite] = useState(null);
@@ -185,6 +185,13 @@ const OpenStreetMap = ({ children }) => {
         }
     }, [sourceGeoCode, targetGeoCode, calculateRoute]);
 
+    // Clear campsites when route is cleared
+    useEffect(() => {
+        if (!route) {
+            setCampsites([]);
+        }
+    }, [route]);
+
     const pointToLayer = (featureData, latlng) => {
         let attn = isBroken(featureData.properties);
 
@@ -210,6 +217,7 @@ const OpenStreetMap = ({ children }) => {
     const updateMapContents = async () => {
         if (!sourceGeoCode || !targetGeoCode) return;
 
+        setCampsitesLoading(true);
         try {
             const formData = new FormData();
             const minLat = Math.min(sourceGeoCode.lat, targetGeoCode.lat) - 2;
@@ -228,6 +236,8 @@ const OpenStreetMap = ({ children }) => {
             setCampsites(response.data.features);
         } catch (error) {
             console.error("Error fetching campsites:", error);
+        } finally {
+            setCampsitesLoading(false);
         }
     };
 
@@ -392,6 +402,31 @@ const OpenStreetMap = ({ children }) => {
                 })}
                 <UpdateMapBounds sourceGeoCode={sourceGeoCode} targetGeoCode={targetGeoCode} route={route} />
             </MapContainer>
+            
+            {/* Loading overlay for campsites */}
+            {isCampsitesLoading && (
+                <div 
+                    style={{ 
+                        position: 'absolute', 
+                        top: '50%', 
+                        left: '50%', 
+                        transform: 'translate(-50%, -50%)', 
+                        zIndex: 1002,
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        padding: '20px',
+                        borderRadius: '10px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}
+                >
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="text-lg font-semibold text-gray-700">Finding Campsites...</div>
+                    <div className="text-sm text-gray-500">Please wait while we search for campsites along your route</div>
+                </div>
+            )}
             <div style={{ position: 'absolute', top: 0, left: 0, zIndex: 1000 }}>
                 {children}
             </div>

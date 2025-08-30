@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 export function RouteInput() {
-    const { sourceAddress, targetAddress, setSourceAddress, setTargetAddress, geocodeAddress } = useStore();
+    const { sourceAddress, targetAddress, setSourceAddress, setTargetAddress, geocodeAddress, isCampsitesLoading } = useStore();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,7 +49,16 @@ export function RouteInput() {
                             />
                         </div>
                         <CardFooter className="flex justify-between px-0">
-                            <Button type="submit">Find Campsites</Button>
+                            <Button type="submit" disabled={isCampsitesLoading}>
+                                {isCampsitesLoading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        <span>Finding Campsites...</span>
+                                    </div>
+                                ) : (
+                                    "Find Campsites"
+                                )}
+                            </Button>
                         </CardFooter>
                     </div>
                 </form>

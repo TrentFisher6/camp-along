@@ -33,6 +33,7 @@ type State = {
   targetGeoCode: Coordinates | null
   route: Route | null
   isLoading: boolean
+  isCampsitesLoading: boolean
   error: string | null
   searchDistance: number
   setSourceAddress: (address: string) => void
@@ -40,6 +41,7 @@ type State = {
   setSearchDistance: (distance: number) => void
   geocodeAddress: (address: string, type: 'source' | 'target') => Promise<void>
   calculateRoute: () => Promise<void>
+  setCampsitesLoading: (loading: boolean) => void
   clearAddresses: () => void
 }
 
@@ -143,23 +145,27 @@ function decodeGeometry(encoded: string): [number, number][] {
 }
 
 const useStore = create<State>()((set, get) => ({
-  sourceAddress: '',
+  sourceAddress: 'Jackson, Wyoming',
   sourceGeoCode: null,
-  targetAddress: '',
+  targetAddress: 'Denver, Colorado',
   targetGeoCode: null,
   route: null,
   isLoading: false,
+  isCampsitesLoading: false,
   error: null,
   searchDistance: 25,
   
   setSourceAddress: (address: string) => 
-    set((state) => ({ ...state, sourceAddress: address, sourceGeoCode: null, route: null })),
+    set((state) => ({ ...state, sourceAddress: address, sourceGeoCode: null, route: null, isCampsitesLoading: false })),
   
   setTargetAddress: (address: string) => 
-    set((state) => ({ ...state, targetAddress: address, targetGeoCode: null, route: null })),
+    set((state) => ({ ...state, targetAddress: address, targetGeoCode: null, route: null, isCampsitesLoading: false })),
 
   setSearchDistance: (distance: number) =>
     set((state) => ({ ...state, searchDistance: distance })),
+  
+  setCampsitesLoading: (loading: boolean) =>
+    set((state) => ({ ...state, isCampsitesLoading: loading })),
   
   geocodeAddress: async (address: string, type: 'source' | 'target') => {
     set((state) => ({ ...state, isLoading: true, error: null }));
@@ -212,7 +218,8 @@ const useStore = create<State>()((set, get) => ({
     sourceGeoCode: null, 
     targetGeoCode: null,
     route: null,
-    error: null 
+    error: null,
+    isCampsitesLoading: false
   })),
 }))
 
