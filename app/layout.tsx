@@ -23,6 +23,9 @@ const geistMono = Geist_Mono({
 export default function Layout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
+        <head>
+            <link rel="icon" href="/other-icons/tent.svg" type="image/svg+xml" />
+        </head>
         <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >

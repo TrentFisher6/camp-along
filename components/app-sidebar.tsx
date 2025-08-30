@@ -6,7 +6,7 @@ import {
     SidebarHeader, SidebarMenuButton, SidebarMenuItem,
     SidebarTrigger,
 } from "@/components/ui/sidebar"
-import {Command} from "lucide-react";
+// ... existing code ...
 import {RouteInput} from "@/components/ui/route-input";
 import { SearchDistanceSlider } from "@/components/ui/search-distance-slider";
 import {Button} from "@/components/ui/button";
@@ -42,7 +42,7 @@ export function AppSidebar() {
                         <SidebarMenuButton size="lg" asChild>
                             <a href="#">
                                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                                    <Command className="size-4" />
+                                    <span className="text-2xl">🏕️</span>
                                 </div>
                                 <div className="grid flex-1 text-left text-3xl leading-tight">
                                     <span className="truncate font-semibold font-pine-forest">Camp Along</span>
